@@ -9,7 +9,7 @@ pipeline {
     kubernetes {
       yamlFile './_cri/KubernetesBuildPod.yaml'
     }
-  }  
+  }
 
   options {
     timeout(time: 10, unit: 'MINUTES')
@@ -26,7 +26,7 @@ pipeline {
           steps {
             script {
               gitCommit = apptentiveGetReleaseCommit()
-              imageName = apptentiveDockerBuild('build', "latest")
+              imageName = apptentiveDockerBuild('', "latest")
             }
           }
         }
