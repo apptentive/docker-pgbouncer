@@ -8,6 +8,20 @@ set -e
 
 PG_CONFIG_DIR=/etc/pgbouncer
 
+DATABASE=${DATABASE:-empty}
+
+if [ "$DATABASE" == "empty" ]; then
+    echo "Please set DATABASE variable (ex. PEOPLE or DEVICES etc..)"
+    exit 1
+fi
+
+DB_HOST=$(cat /vault/secrets/env.properties|grep ${DATABASE:-POSTGRES}|grep _PGB_| grep DB_HOST|awk '{print $NF}')
+DB_USER=$(cat /vault/secrets/env.properties|grep ${DATABASE:-POSTGRES}|grep DB_USER|awk '{print $NF}')
+DB_PASS=$(cat /vault/secrets/env.properties|grep ${DATABASE:-POSTGRES}|grep DB_PASS|awk '{print $NF}')
+DB_NAME=$(cat /vault/secrets/env.properties|grep ${DATABASE:-POSTGRES}|grep DB_NAME|awk '{print $NF}')
+
+DATABASE_URL="postgres://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT:-5432}/${DB_NAME:-postgres}"
+
 if [ -n "$DATABASE_URL" ]; then
   # Thanks to https://stackoverflow.com/a/17287984/146289
 
@@ -50,10 +64,12 @@ fi
 if [ -n "$DB_USER" -a -n "$DB_PASSWORD" -a -e "${_AUTH_FILE}" ] && ! grep -q "^\"$DB_USER\"" "${_AUTH_FILE}"; then
   if [ "$AUTH_TYPE" != "plain" ]; then
      pass="md5$(echo -n "$DB_PASSWORD$DB_USER" | md5sum | cut -f 1 -d ' ')"
+     pass2="md5$(echo -n "pgbouncerpgbouncer" | md5sum | cut -f 1 -d ' ')"
   else
      pass="$DB_PASSWORD"
   fi
   echo "\"$DB_USER\" \"$pass\"" >> ${PG_CONFIG_DIR}/userlist.txt
+  echo "\"pgbouncer\" \"$pass2\"" >> ${PG_CONFIG_DIR}/userlist.txt
   echo "Wrote authentication credentials to ${PG_CONFIG_DIR}/userlist.txt"
 fi
 
@@ -100,7 +116,7 @@ ${LOG_POOLER_ERRORS:+log_pooler_errors = ${LOG_POOLER_ERRORS}\n}\
 ${LOG_STATS:+log_stats = ${LOG_STATS}\n}\
 ${STATS_PERIOD:+stats_period = ${STATS_PERIOD}\n}\
 ${VERBOSE:+verbose = ${VERBOSE}\n}\
-admin_users = ${ADMIN_USERS:-postgres}
+admin_users = ${ADMIN_USERS:-pgbouncer}
 ${STATS_USERS:+stats_users = ${STATS_USERS}\n}\
 
 # Connection sanity checks, timeouts
