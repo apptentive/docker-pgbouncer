@@ -16,8 +16,8 @@ if [ "$DATABASE" == "empty" ]; then
 fi
 
 DB_HOST=$(cat /vault/secrets/env.properties|grep ${DATABASE:-POSTGRES}|grep _PGB_| grep DB_HOST|awk '{print $NF}')
-DB_USER=$(cat /vault/secrets/env.properties|grep ${DATABASE:-POSTGRES}|grep DB_USER|awk '{print $NF}')
-DB_PASS=$(cat /vault/secrets/env.properties|grep ${DATABASE:-POSTGRES}|grep DB_PASS|awk '{print $NF}')
+DB_USER=$(cat /vault/secrets/env.properties|grep ${DATABASE:-POSTGRES}|grep -m1 DB_USER|awk '{print $NF}')
+DB_PASS=$(cat /vault/secrets/env.properties|grep ${DATABASE:-POSTGRES}|grep -m1 DB_PASS|awk '{print $NF}')
 DB_NAME=$(cat /vault/secrets/env.properties|grep ${DATABASE:-POSTGRES}|grep DB_NAME|awk '{print $NF}')
 
 DATABASE_URL="postgres://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT:-5432}/${DB_NAME:-postgres}"
